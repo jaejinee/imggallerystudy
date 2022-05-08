@@ -1,0 +1,12 @@
+.progressbar-boundary {
+  border: 1px solid black;
+  margin-bottom: 20px;
+  height: 30px;
+}
+.progressbar-boundary div {
+  background-color: aquamarine;
+  height: calc(100% - 5px);
+  text-align: center;
+  padding-top: 5px;
+  transition: 0.3s;
+}

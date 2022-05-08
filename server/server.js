@@ -1,49 +1,34 @@
+// 보안
+require("dotenv").config();
 const express = require("express");
-// 이미지 저장
-const multer = require("multer");
-// 이미지 파일 이름 유니크한 아이디로 생성
-const { v4: uuid } = require("uuid");
-// 이미지 파일 확장자 붙이기
-const mime = require("mime-types");
-
-// 이미지 저장
-const storage = multer.diskStorage({
-  // 저장되는 곳
-  destination: (req, file, cb) => cb(null, "./uploads"),
-  // 이미지 파일 이름
-  filename: (req, file, cb) =>
-    //이미지 파일 확장자 붙이기
-    cb(null, `${uuid()}.${mime.extension(file.mimetype)}`),
-});
-const upload = multer({
-  storage,
-  // 이미지 파일 필터 설정 - 확장자 설정
-  fileFilter: (req, file, cb) => {
-    if (["image/jpeg", "image/png"].includes(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new Error("invalid file type"), false);
-    }
-  },
-  limits: {
-    // 파일 사이즈 5메가로 제한
-    fileSize: 1024 * 1024 * 5,
-  },
-});
+// mogodb
+const mongoose = require("mongoose");
+// imageRouter
+const { imageRouter } = require("./routes/imageRouter");
+const { userRouter } = require("./routes/userRouter");
 
 const app = express();
-const PORT = 3000;
+const { MONGO_URI, PORT } = process.env;
 
-// 클라이언트 측에서 주소 경로를 통해 이미지 접속하게 허락
-app.use("/uploads", express.static("uploads"));
-
-// 이미지 올린걸 확인할 수 있게 보여줌
-app.post("/upload", upload.single("imageTest"), (req, res) => {
-  console.log(req.file);
-  res.json(req.file);
-});
-
-// 서버 실행
-app.listen(PORT, () => {
-  console.log("Express server listening on PORT " + PORT);
-});
+// DB 연결
+mongoose
+  .connect(MONGO_URI, {
+    // useCreateIndex: true,
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => {
+    console.log("MogoDB connected");
+    // DB 연결 후 서버 구동
+    // 클라이언트 측에서 주소 경로를 통해 이미지 접속하게 허락
+    app.use("/uploads", express.static("uploads"));
+    app.use(express.json());
+    // images 경로에 있는 모든 걸 imageRouter로 전송
+    app.use("/images", imageRouter);
+    app.use("/users", userRouter);
+    // 서버 실행
+    app.listen(PORT, () => {
+      console.log("Express server listening on PORT " + PORT);
+    });
+  })
+  .catch((err) => console.log(err));
